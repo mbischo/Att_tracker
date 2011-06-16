@@ -1,0 +1,12 @@
+<% javascript_tag do -%>
+  var <%= "#{form_items}" %> = [
+    <%= ext_field(:field_label => 'Name', :name => 'raid_event[name]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Dungeon', :name => 'raid_event[dungeon_id]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Begin date', :name => 'raid_event[begin_date]', :xtype => :datetime_select) %>,
+    <%= ext_field(:field_label => 'End date', :name => 'raid_event[end_date]', :xtype => :datetime_select) %>,
+    <%= ext_field(:field_label => 'Is scheduled', :name => 'raid_event[is_scheduled]', :xtype => :check_box) %>,
+    <%= ext_field(:field_label => 'Time chunks', :name => 'raid_event[time_chunks]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Description', :name => 'raid_event[description]', :xtype => :text_field) %>,
+		<%= ext_field(:field_label => 'Tracker XML', :name => 'raid_event[raid_tracker_source]', :xtype => :text_area) %>
+  ];
+<% end -%>

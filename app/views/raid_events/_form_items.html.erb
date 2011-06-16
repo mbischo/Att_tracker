@@ -1,0 +1,91 @@
+      // turn on validation errors beside the field globally
+      Ext.form.Field.prototype.msgTarget = 'side';
+
+      var centerPanel = new Ext.FormPanel({
+					id: 'mainEditForm',
+          labelWidth:   110, // label settings here cascade unless overridden
+          frame:         true,
+          waitMsgTarget: true,
+          title:         '<%= @mode%> Raid Event',
+          bodyStyle:     'padding:5px 5px 0',
+          defaults:      {width: 230},
+          defaultType:   'textfield',
+          baseParams:    {<% if protect_against_forgery? %> <%=request_forgery_protection_token%>: '<%=form_authenticity_token%>'<% end %>},
+          items: [
+							    {  fieldLabel: 'Name',  xtype: 'textfield',  name: 'raid_event[name]',disabled: <%= @mode==:show%>, value: '<%= @raid_event.name %>'},
+							    {  fieldLabel: 'Is scheduled',  
+										id: 'scheduledCheck', 
+										xtype: 'checkbox',  
+										checked: <%= @raid_event.is_scheduled %>,
+										inputValue: '1', 
+										width: 18, 
+										height: 21,  
+										name: 'raid_event[is_scheduled]',
+										disabled: <%= @mode==:show%>
+									},
+									{   xtype: 'hidden', value: 0, name: 'raid_event[is_scheduled]' },
+									{  fieldLabel: 'Is "Failed" Raid',  
+										id: 'nonrunCheck', 
+										xtype: 'checkbox',  
+										checked: <%= @raid_event.is_nonrun %>,
+										inputValue: '1', 
+										width: 18, 
+										height: 21,  
+										name: 'raid_event[is_nonrun]',
+										disabled: <%= @mode==:show%>,
+										listeners: {
+											check: function(box, value) {
+												if ( value ) {
+													Ext.getCmp('timeCreditField').show();
+												} else {
+													Ext.getCmp('timeCreditField').hide();
+												}
+											}
+										}
+									},
+									{ xtype: 'hidden', value: 0, name: 'raid_event[is_nonrun]' },
+									{ fieldLabel: 'Time Credit', id: 'timeCreditField', width: 25, name: 'raid_event[time_chunks]', hidden: <%= !@raid_event.is_nonrun %>,disabled: <%= @mode==:show%>, value: '<%= @raid_event.time_chunks %>'},
+							    { fieldLabel: 'Description',  xtype: 'textfield',  width: 350,  name: 'raid_event[description]',disabled: <%= @mode==:show%>, value: '<%= @raid_event.description%>'},
+									{ fieldLabel: 'Tracker XML',  id: 'trackerSource', xtype: 'textarea',  width: 1000,  height: 400,disabled: <%= @mode==:show%>,  name: 'raid_event[raid_tracker_source]'}
+							  ],
+
+							 buttons: [ 
+								<% if @mode == :edit%>
+									{  text: 'Save',
+								  	type: 'submit',
+										handler: function(){ 
+											centerPanel.getForm().submit({
+												url:'/raid_events/<%= @raid_event.id %>?format=ext_json',
+												params: { _method: 'PUT' },
+												timeout: 20000,
+												waitMsg:'Saving (may take a while)...',
+												scope: 'centerPanel'
+											});
+										}
+									},
+								<% elsif @mode == :new %>
+								{  text: 'Save',
+								  	type: 'submit',
+										handler: function(){ 
+											centerPanel.getForm().submit({
+												url:'/raid_events/<%= @raid_event.id %>?format=ext_json',
+												params: { _method: 'POST' },
+												timeout: 20000,
+												waitMsg:'Saving (may take a while)...'
+											});
+										}
+									},
+								<% end %>
+			            {  text: 'Back',
+									  handler: function(){ 
+												centerPanel.suspendEvents(); 
+												window.location.href = '/raid_events'; 
+											}
+									}
+			            ]
+      });
+
+      // populate form values
+
+			Ext.getCmp('trackerSource').setValue(<%=@raid_event.raid_tracker_source.to_json %>);
+      

@@ -1,0 +1,10 @@
+<% javascript_tag do -%>
+  var <%= "#{form_items}" %> = [
+    <%= ext_field(:field_label => 'Raid event', :name => 'member_participation[raid_event_id]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Member', :name => 'member_participation[member_id]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Time chunks played', :name => 'member_participation[time_chunks_played]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Epics need', :name => 'member_participation[epics_need]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Epics greed', :name => 'member_participation[epics_greed]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Note', :name => 'member_participation[note]', :xtype => :text_field) %>
+  ];
+<% end -%>

@@ -1,0 +1,123 @@
+	var memberData = [['','']
+		<% @members.each do |mem| %>
+			,['<%= mem.id %>', '<%= mem.name %>']
+		<% end %>
+	];
+	
+	var toonClassData = [['','']
+		<% @class_list.each do |cla| %>
+			,['<%= cla.id %>', '<%= cla.name %>']
+		<% end %>
+	];
+
+	var member_simplestore = new Ext.data.SimpleStore({
+		fields: [{name: 'id', mapping: 0},{name: 'name', mapping: 1}],
+		id: 'id',
+		sortInfo: {field: 'name', direction: 'ASC'},
+		listeners: {
+			loadexception: function() {
+				alert("eppp");
+				}
+		}
+	});
+	
+	var toon_class_simplestore = new Ext.data.SimpleStore({
+		fields: [{name: 'id', mapping: 0},{name: 'name', mapping: 1}],
+		id: 'id',
+		sortInfo: {field: 'name', direction: 'ASC'},
+		listeners: {
+			loadexception: function() {
+				alert("eppp");
+				}
+		}
+	});
+	
+	
+			
+	// Not pretty , but it's the only way it works for some reason
+	member_simplestore.loadData(memberData);
+	toon_class_simplestore.loadData(toonClassData);
+	
+	
+	// turn on validation errors beside the field globally
+	Ext.form.Field.prototype.msgTarget = 'side';
+	
+	var centerPanel = new Ext.FormPanel({
+	    labelWidth:   75, // label settings here cascade unless overridden
+	    url:          '/toons',
+	    frame:         true,
+	    waitMsgTarget: true,
+	    title:         '<%= @mode%> Toon',
+	    bodyStyle:     'padding:5px 5px 0',
+	    width:      350,
+	    defaults:      {width: 230},
+	    defaultType:   'textfield',
+	    baseParams:    {<% if protect_against_forgery? %> <%=request_forgery_protection_token%>: '<%=form_authenticity_token%>'<% end %>},
+	    items: [
+		    {  fieldLabel: 'Name',  xtype: 'textfield',  name: 'toon[name]',disabled: <%= @mode==:show%>,value: '<%= @toon.name %>'},
+				{ 
+					fieldLabel: 'Member',
+					id: 'memberCombo',
+					xtype: 'combo',
+					store: member_simplestore,
+					hiddenName: 'toon[member_id]',
+					valueField: 'id',
+					value: '<%= @toon.member_id %>',
+					displayField: 'name',
+					mode: 'local',
+					typeAhead: false,
+					triggerAction: 'all',
+					editable: false,
+					allowBlank: false,
+					disabled: <%= @mode==:show%>
+	
+				},
+		    {  fieldLabel: 'Is main',  id: 'mainCheck', xtype: 'checkbox',disabled: <%= @mode==:show%>,  checked: <%= @toon.is_main %>,inputValue: '1', width: 18, height: 21,  name: 'toon[is_main]' },
+				{   xtype: 'hidden', value: 0, name: 'toon[is_main]' },
+		    {  fieldLabel: 'Spec note',  xtype: 'textfield',disabled: <%= @mode==:show%>,  name: 'toon[spec_note]',value: '<%= @toon.spec_note %>'},
+		    {  fieldLabel: 'Level',  xtype: 'textfield',disabled: <%= @mode==:show%>,  name: 'toon[level]',value: '<%= @toon.level %>'},
+		    {  fieldLabel: 'Guild',  xtype: 'textfield',disabled: <%= @mode==:show%>,  name: 'toon[guild]',value: '<%= @toon.guild %>'},
+		    {  fieldLabel: 'Armory url',  xtype: 'textfield',disabled: <%= @mode==:show%>,  name: 'toon[armory_url]',value: '<%= @toon.armory_url %>'},
+		    {  fieldLabel: 'Heroes url',  xtype: 'textfield',disabled: <%= @mode==:show%>,  name: 'toon[heroes_url]',value: '<%= @toon.heroes_url %>'},
+				{ 
+					fieldLabel: 'Class',
+					id: 'classCombo',
+					xtype: 'combo',
+					store: toon_class_simplestore,
+					hiddenName: 'toon[toonClass_id]',
+					valueField: 'id',
+					displayField: 'name',
+					value: '<%= @toon.toonClass_id %>',
+					editable: false,
+					mode: 'local',
+					typeAhead: false,
+					triggerAction: 'all',
+					allowBlank: false,
+					disabled: <%= @mode==:show%>
+				}
+			],
+	
+	    buttons: [ 
+			<% if @mode == :edit%>
+				{  text: 'Save',
+			  	type: 'submit',
+					handler: function(){ 
+						centerPanel.getForm().submit({url:'/toons/<%= @toon.id %>?format=ext_json', params: { _method: 'PUT' }, waitMsg:'Saving...'});
+					}
+				},
+			<% elsif @mode == :new %>
+			{  text: 'Save',
+			  	type: 'submit',
+					handler: function(){ 
+						centerPanel.getForm().submit({url:'/toons/<%= @toon.id %>?format=ext_json', params: { _method: 'POST' }, waitMsg:'Saving...'});
+					}
+				},
+			<% end %>
+	      {  text: 'Back',
+				  handler: function(){ 
+							centerPanel.suspendEvents(); 
+							window.location.href = '/toons'; 
+						}
+				}
+	      ]
+	});

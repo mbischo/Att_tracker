@@ -1,0 +1,58 @@
+<% @mode = :show %>
+
+var centerPanel = new Ext.Panel({
+	layout: 'border',
+	items: [
+		{
+			region: 'north',
+			height: 85,
+			html: '<H4><%=@dungeon.name%></H4>'+
+			'Mode: <%=@dungeon.mode%><br/>' +
+			'Player Limit: <%=@dungeon.player_limit%><br/>' +
+			'Minutes per Chunk: <%=@dungeon.chunk_size_in_min %><br/>'
+		},
+		{
+			region: 'center',
+			xtype: 'tabpanel',
+					activeTab: 0,
+					items: [{
+						title: 'Raids',
+						xtype: 'grid',
+						stripeRows: true,
+						ds: new Ext.data.Store({
+									autoLoad: true,
+							    proxy: new Ext.data.HttpProxy({
+							               url: '/dungeons/raids/<%= @dungeon.id %>?format=ext_json',
+							               method: 'GET'
+							           }),
+							    reader: new Ext.data.JsonReader({
+							                root: 'raid_events',
+							                id: 'id',
+							                totalProperty: 'results'
+							            },
+							            [ {name: 'id', mapping: 'raid_event.id'},
+													 {name: 'raid_name', mapping: 'raid_event.name'},
+													 {name: 'raid_total_time', mapping: 'raid_event.time_chunks'},
+													 {name: 'raid_begin_date', mapping: 'raid_event.begin_date', type: 'date', dateFormat: 'c'},
+													 {name: 'description', mapping: 'raid_event.description'}
+													]),
+							    sortInfo: {field: 'raid_begin_date', direction: 'DESC'}
+							}), // End of Datasource
+							cm: new Ext.grid.ColumnModel([
+						    {id: 'id', header: "#", dataIndex: 'id',hidden:true},
+								{dataIndex: 'raid_begin_date', width: 45, renderer : Ext.util.Format.dateRenderer('m/d')},
+								{header: 'Time Chunks', width: 75, dataIndex: 'raid_total_time', sortable: true},
+								{header: 'Raid Name', dataIndex: 'raid_name', sortable: true, width: 275},
+								{header: 'Desc', dataIndex: 'description', sortable: true, width: 475}
+						  ]), // End of Column Model
+							listeners: {
+								 dblclick: function(grid, row, e) {
+								 	var selected = this.getSelectionModel().getSelected();
+								 	window.location.href = '/raid_events/' + selected.data.id;
+								 }
+							}
+						}
+						] // End of Tab panel items
+				}] // End of Center Panel Items
+
+});

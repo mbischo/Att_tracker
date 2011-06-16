@@ -1,14 +1,133 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <title>AttTracker</title>
-  <%= stylesheet_link_tag :all %>
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+  <title>Tracker: <%= controller.action_name %></title>
+  <%= stylesheet_link_tag 'ext_scaffold' %>
+  <%= stylesheet_link_tag "../ext/resources/css/ext-all.css" %>
   <%= javascript_include_tag :defaults %>
-  <%= csrf_meta_tag %>
+  <%= javascript_include_tag "../ext/adapter/prototype/ext-prototype-adapter.js" %>
+  <%= javascript_include_tag RAILS_ENV == "development" ? "../ext/ext-all-debug.js" : "../ext/ext-all.js" %>
+  <%= javascript_include_tag "ext_datetime.js" %>
+  <%= javascript_include_tag "ext_searchfield.js" %>
+  <%= javascript_include_tag "../ext/build/locale/ext-lang-en-min.js" %>
+	<!-- ItemSelector for Roll Pool edit page -->
+	<%= stylesheet_link_tag "../ext/examples/multiselect/multiselect.css" %>
+	<%= javascript_include_tag "../ext/examples/multiselect/DDView.js" %>
+	<%= javascript_include_tag "../ext/examples/multiselect/MultiSelect.js" %>
+	<%= javascript_include_tag "../ext/examples/multiselect/ItemSelector.js" %>
 </head>
+
 <body>
 
-<%= yield %>
+<div style="padding-left:150px">
+<div style="height:20px">
+<p style="color: green" id="flash-message"><%= flash[:notice] %></p>
+<% javascript_tag do -%>
+  setTimeout(function() { new Effect.Fade("flash-message",{}); }, 1000);
+<% end -%>
+</div>
+<!-- <div id="header-bar"></div>
+<div id="main"></div> -->
+<% javascript_tag do -%>
+	Ext.onReady(function(){
+	
+	Ext.QuickTips.init();
+		
+	var headerPanel = new Ext.Panel({
+		title: 'Attendance Tracker',
+		layout: 'fit',
+	  tbar:[{
+	      text:'Raids',
+	      tooltip:'Go to Raids Listing',
+	      handler: function(){
+	                 window.location.href = '<%= raid_events_path %>';
+	               },
+	      iconCls:'raid'
+	  }, '-',
+		{
+	      text:'Members',
+	      tooltip:'Go to Members Listing',
+	      handler: function(){
+	                 window.location.href = '<%= members_path %>';
+	               },
+	      iconCls:'member'
+	  }, '-',
+		{
+	      text:'Toons',
+	      tooltip:'Go to Toons Listing',
+	      handler: function(){
+	                 window.location.href = '<%= toons_path %>';
+	               },
+	      iconCls:'toon'
+	  }, '-',
+		{
+	      text:'Dungeons',
+	      tooltip:'Go to Dungeons Listing',
+	      handler: function(){
+	                 window.location.href = '<%= dungeons_path %>';
+	               },
+	      iconCls:'dungeon'
+	  }, '-',
+		{
+	      text:'Pools',
+	      tooltip:'Go to Roll Pools Listing',
+	      handler: function(){
+	                 window.location.href = '<%= roll_pools_path %>';
+	               },
+	      iconCls:'dungeon'
+	  }
+		<% if current_user != nil %>
+		, '->',
+		{
+	      text:'Logout',
+	      tooltip:'Logout',
+	      handler: function(){
+	                 window.location.href = '/logout';
+	               },
+	      iconCls:'logout'
+	  }
+		<% else %>
+		, '->',
+		{
+	      text:'Login',
+	      tooltip:'Login',
+	      handler: function(){
+	                 window.location.href = '/login';
+	               },
+	      iconCls:'logout'
+	  }
+		<% end %>
+		]
+	}); // end panel description
+	
+	// Javascript goes here
+	<%= yield  %>
+	// Javascript from action ends here
+	
+		var viewport = new Ext.Viewport({
+				id: 'blahblahtest',
+		    layout:'border',
+		    items: [{
+		        region: 'north',
+		        height: 50,
+		        minSize: 75,
+		        maxSize: 250,
+		        margins: '0 0 0 0',
+						items: headerPanel
+		    },{
+						id: 'center-region',
+		        region:'center',
+		        margins: '0 0 0 0',
+						items: centerPanel,
+						layout: 'fit'
+		    }]
+		});
+	});
+	<% end -%>
+</div>
 
 </body>
 </html>

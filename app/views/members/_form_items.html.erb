@@ -1,0 +1,73 @@
+	var toonData = [['','']
+		<% @toons.each do |toon| %>
+			,['<%= toon.id %>', '<%= toon.name %>']
+		<% end %>
+	];
+	
+	var toon_simplestore = new Ext.data.SimpleStore({
+		fields: [{name: 'id', mapping: 0},{name: 'name', mapping: 1}],
+		id: 'id',
+		sortInfo: {field: 'name', direction: 'ASC'},
+		listeners: {
+			loadexception: function() {
+				alert("eppp");
+				}
+		}
+	});
+
+	
+
+	toon_simplestore.loadData(toonData);
+	
+  // turn on validation errors beside the field globally
+  Ext.form.Field.prototype.msgTarget = 'side';
+
+  var centerPanel = new Ext.FormPanel({
+      labelWidth:   75, // label settings here cascade unless overridden
+      url:          '/members',
+      frame:         true,
+      waitMsgTarget: true,
+      title:         '<%= @mode%> Member',
+      bodyStyle:     'padding:5px 5px 0',
+      width:      350,
+      defaults:      {width: 230},
+      defaultType:   'textfield',
+      baseParams:    {<% if protect_against_forgery? %> <%=request_forgery_protection_token%>: '<%=form_authenticity_token%>'<% end %>},
+      items: [
+				{  fieldLabel: 'Name',  xtype: 'textfield',disabled: <%= @mode==:show%>,  name: 'member[name]', value: '<%= @member.name %>'},
+				{ 
+					fieldLabel: 'Main Toon',
+					id: 'memberCombo',
+					xtype: 'combo',
+					store: toon_simplestore,
+					hiddenName: 'member[main_toon_id]',
+					valueField: 'id',
+					value: '<%= @member.main_toon_id %>',
+					displayField: 'name',
+					mode: 'local',
+					typeAhead: false,
+					triggerAction: 'all',
+					editable: false,
+					allowBlank: true,
+					disabled: <%= @mode==:show%>
+				},
+				{  fieldLabel: 'Epic need total',  xtype: 'textfield',disabled: <%= @mode==:show%>,  name: 'member[epic_need_total]', value: '<%= @member.epic_need_total %>'},
+				{  fieldLabel: 'Epic greed total',  xtype: 'textfield',disabled: <%= @mode==:show%>,  name: 'member[epic_greed_total]', value: '<%= @member.epic_greed_total %>'}],
+      buttons: [ <% if @mode == :edit%>
+										{  text: 'Save',
+									  	type: 'submit',
+											handler: function(){ 
+												centerPanel.getForm().submit({url:'/members/<%= @member.id %>?format=ext_json', params: { _method: 'PUT' }, waitMsg:'Saving...'});
+											}
+										},
+									<% elsif @mode == :new %>
+									{  text: 'Save',
+									  	type: 'submit',
+											handler: function(){ 
+												centerPanel.getForm().submit({url:'/members/<%= @member.id %>?format=ext_json', params: { _method: 'POST' }, waitMsg:'Saving...'});
+											}
+										},
+									<% end %>
+                 {  text: 'Back',  handler: function(){ centerPanel.suspendEvents(); window.location.href = '/members'; }}
+               ]
+  });

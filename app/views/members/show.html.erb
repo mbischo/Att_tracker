@@ -1,0 +1,134 @@
+<% @mode = :show %>
+
+var centerPanel = new Ext.Panel({
+	layout: 'border',
+	items: [
+		{
+			region: 'north',
+			height: 65,
+			html: '<H4><%=@member.name%></H4>'+
+			'Epic Need Total: <%=@member.epic_need_total%><br/>' +
+			'Epic Greed Total: <%=@member.epic_greed_total%><br/>'
+		},
+		{
+			region: 'center',
+			xtype: 'tabpanel',
+					activeTab: 0,
+					items: [{
+						title: 'Toons',
+						xtype: 'grid',
+						ds: new Ext.data.Store({
+							    proxy: new Ext.data.HttpProxy({
+							               url: '/members/toons/<%= @member.id %>?format=ext_json',
+							               method: 'GET'
+							           }),
+							    reader: new Ext.data.JsonReader({
+							                root: 'toons',
+							                id: 'id',
+							                totalProperty: 'results'
+							            },
+							            [ {name: 'id', mapping: 'toon.id'},
+													 {name: 'name', mapping: 'toon.name'},
+													 {name: 'is_main', mapping: 'toon.is_main'},
+													 {name: 'toon_class_name', mapping: 'toon.toonClass.name'}
+													]),
+							    sortInfo: {field: 'name', direction: 'ASC'}
+							}), // End of Datasource
+						cm: new Ext.grid.ColumnModel([
+					    {id: 'id', header: "#", dataIndex: 'id',hidden:true},
+					    {header: 'Name', dataIndex: 'name', sortable: true, width: 250},
+							{header: 'Class', dataIndex: 'toon_class_name', sortable: true, width: 85}
+					  ]), // End of Column Model
+			      stripeRows: true,
+						listeners: {
+							render: function(cmp) { cmp.store.load(); },
+							dblclick: function(grid, row, e) {
+								 	var selected = this.getSelectionModel().getSelected();
+								 	window.location.href = '/toons/' + selected.data.id;
+								 }
+						}
+						},
+						{
+						title: 'Raids',
+						xtype: 'grid',
+						stripeRows: true,
+						ds: new Ext.data.Store({
+									autoLoad: true,
+							    proxy: new Ext.data.HttpProxy({
+							               url: '/members/raids/<%= @member.id %>?format=ext_json',
+							               method: 'GET'
+							           }),
+							    reader: new Ext.data.JsonReader({
+							                root: 'member_participations',
+							                id: 'id',
+							                totalProperty: 'results'
+							            },
+							            [ {name: 'id', mapping: 'member_participation.id'},
+													 {name: 'name', mapping: 'member_participation.toon.name'},
+													 {name: 'guild', mapping: 'member_participation.toon.guild'},
+													 {name: 'chunk_time', mapping: 'member_participation.time_chunks_played'},
+													 {name: 'toon_id', mapping: 'member_participation.toon_id'},
+													 {name: 'raid_id', mapping: 'member_participation.raid_event_id'},
+													 {name: 'raid_name', mapping: 'member_participation.raidEvent.name'},
+													 {name: 'raid_total_time', mapping: 'member_participation.raidEvent.time_chunks'},
+													 {name: 'raid_dungeon_name', mapping: 'member_participation.raidEvent.dungeon.name'},
+													 {name: 'raid_dungeon_mode', mapping: 'member_participation.raidEvent.dungeon.mode'},
+													 {name: 'raid_begin_date', mapping: 'member_participation.raidEvent.begin_date', type: 'date', dateFormat: 'c'}
+													]),
+							    sortInfo: {field: 'raid_begin_date', direction: 'DESC'}
+							}), // End of Datasource
+							cm: new Ext.grid.ColumnModel([
+						    {id: 'id', header: "#", dataIndex: 'id',hidden:true},
+								{dataIndex: 'raid_begin_date', width: 45, renderer : Ext.util.Format.dateRenderer('m/d')},
+						    {header: 'Name', dataIndex: 'name', sortable: true},
+						    {header: 'Play Time', width: 55, dataIndex: 'chunk_time', sortable: true},
+								{header: 'Total Time', width: 65, dataIndex: 'raid_total_time', sortable: true},
+								{header: 'Raid Name', dataIndex: 'raid_name', sortable: true, width: 175},
+								{header: 'Mode', dataIndex: 'raid_dungeon_name', sortable: true, width: 175},
+								{header: 'Dungeon', dataIndex: 'raid_dungeon_mode', sortable: true, width: 175}
+						  ]), // End of Column Model
+							listeners: {
+								 dblclick: function(grid, row, e) {
+								 	var selected = this.getSelectionModel().getSelected();
+								 	window.location.href = '/raid_events/' + selected.data.raid_id;
+								 }
+							}
+						},
+						{
+						title: 'Loot',
+						xtype: 'grid',
+						ds: new Ext.data.Store({
+									autoLoad: true,
+							    proxy: new Ext.data.HttpProxy({
+							               url: '/members/loots/<%= @member.id %>?format=ext_json',
+							               method: 'GET'
+							           }),
+							    reader: new Ext.data.JsonReader({
+							                root: 'loot_events',
+							                id: 'id',
+							                totalProperty: 'results'
+							            },
+							            [ {name: 'id', mapping: 'loot_event.id'},
+													 {name: 'name', mapping: 'loot_event.item_name'},
+													 {name: 'loot_date', mapping: 'loot_event.loot_date', type: 'date', dateFormat: 'c'},
+													 {name: 'toon_name', mapping: 'loot_event.toon.name'},
+													 {name: 'boss_name', mapping: 'loot_event.bossKill.boss_name'}
+													]),
+							    sortInfo: {field: 'loot_date', direction: 'DESC'}
+							}), // End of Datasource
+							cm: new Ext.grid.ColumnModel([
+						    {id: 'id', header: "#", dataIndex: 'id',hidden:true},
+								{header: 'Loot Time', dataIndex: 'loot_date', width: 70, renderer : Ext.util.Format.dateRenderer('M-d-Y h:i A')},
+								{header: 'Toon Name', dataIndex: 'toon_name'},
+						    {header: 'Item Name', dataIndex: 'name', width: 250},
+								{header: 'From', dataIndex: 'boss_name', width: 250}
+						  ]), // End of Column Model
+				      stripeRows: true,
+				      viewConfig: {
+				          //forceFit:true
+				      }
+						} // End of loot grid
+						] // End of Tab panel items
+				}] // End of Center Panel Items
+
+});

@@ -1,0 +1,14 @@
+<div id="member_participation-grid"></div>
+<%= ext_datastore_for 'MemberParticipation' %>
+<% javascript_tag do -%>
+  var member_participation_column_model = new Ext.grid.ColumnModel([
+    {id: 'id', header: "#", width: 20, dataIndex: 'id'},
+    {header: 'Raid event', dataIndex: 'member_participation[raid_event_id]'},
+    {header: 'Member', dataIndex: 'member_participation[member_id]'},
+    {header: 'Time chunks played', dataIndex: 'member_participation[time_chunks_played]'},
+    {header: 'Epics need', dataIndex: 'member_participation[epics_need]'},
+    {header: 'Epics greed', dataIndex: 'member_participation[epics_greed]'},
+    {header: 'Note', dataIndex: 'member_participation[note]'}
+  ]);
+<% end -%>
+<%= ext_grid_for 'MemberParticipation', :element => 'member_participation-grid' %>

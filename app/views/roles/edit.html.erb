@@ -1,0 +1,6 @@
+<div id="role-form"></div>
+<%= render :partial => 'form_items', :object => :role_form_items %>
+<%= ext_form_for 'Role',
+                 :element => 'role-form',
+                 :form_items => :role_form_items,
+                 :mode => :edit %>

@@ -1,0 +1,10 @@
+<div id="role-grid"></div>
+<%= ext_datastore_for 'Role' %>
+<% javascript_tag do -%>
+  var role_column_model = new Ext.grid.ColumnModel([
+    {id: 'id', header: "#", width: 20, dataIndex: 'id'},
+    {header: 'Title', dataIndex: 'role[title]'},
+    {header: 'Description', dataIndex: 'role[description]'}
+  ]);
+<% end -%>
+<%= ext_grid_for 'Role', :element => 'role-grid' %>

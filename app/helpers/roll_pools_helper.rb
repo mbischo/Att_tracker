@@ -1,0 +1,2 @@
+module RollPoolsHelper
+end

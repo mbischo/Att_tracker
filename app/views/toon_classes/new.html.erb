@@ -1,0 +1,6 @@
+<div id="toon_class-form"></div>
+<%= render :partial => 'form_items', :object => :toon_class_form_items %>
+<%= ext_form_for 'ToonClass',
+                 :element => 'toon_class-form',
+                 :form_items => :toon_class_form_items,
+                 :mode => :new %>

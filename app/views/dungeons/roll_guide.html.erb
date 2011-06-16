@@ -1,0 +1,48 @@
+var guide_request_datastore = new Ext.data.Store({
+    proxy: new Ext.data.HttpProxy({
+               url: '/guide_requests/<%= @current_request.id %>.json',
+               method: 'GET'
+           }),
+    reader: new Ext.data.JsonReader({
+                id: 'id',
+                totalProperty: 'results'
+            },
+            [ {name: 'id', mapping: 'member_roll_guide.id'},
+						 {name: 'member_roll_guide[roll_percentage]', mapping: 'member_roll_guide.roll_percentage'},
+						 {name: 'member_roll_guide[name]', mapping: 'member_roll_guide.member.name', type: 'string'} ]),
+    sortInfo: {field: 'member_roll_guide[name]', direction: 'ASC'}
+});
+var roll_column_model = new Ext.grid.ColumnModel([
+    {id: 'id', header: "#", width: 20, dataIndex: 'id', hidden: true},
+    {header: 'Name', dataIndex: 'member_roll_guide[name]'},
+    {header: 'Guide Number', dataIndex: 'member_roll_guide[roll_percentage]'}
+  ]);
+	
+
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+		
+    roll_column_model.defaultSortable = true;
+
+    // create the grid
+    var centerPanel = new Ext.grid.GridPanel({
+        ds: guide_request_datastore,
+        cm: roll_column_model,
+        sm: new Ext.grid.RowSelectionModel({singleSelect:true}),
+        title:      'Rolling Guide',
+        width:      600,
+        height:     500,
+        stripeRows: true,
+				tbar:['->',{
+			      text:'Lua',
+			      tooltip:'Display Lua version of listing',
+			      handler: function(){
+			                 spoon = window.open('/dungeons/roll_guide/<%=@dungeon.id%>.lua');
+			               },
+			      iconCls:'raid'
+			  }],
+        viewConfig: {
+            forceFit:true
+        }
+    });
+
+    guide_request_datastore.load();

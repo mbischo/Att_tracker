@@ -1,0 +1,20 @@
+<h1>A simple table</h1>
+<table>
+	<tr>
+		<% @table["headings"].each do |head| %>
+			<td>
+				<b><%= head %> </b>
+			</td>
+		<% end %>
+	</tr>
+	
+	<% @table["body"].each do |row| %>
+		<tr>
+			<% row.each do |col| %>
+				<td>
+					<%= col %>
+				</td>
+			<% end %>
+		</tr>
+	<% end %>
+</table>

@@ -1,0 +1,58 @@
+<% @mode = :show %>
+
+var centerPanel = new Ext.Panel({
+	layout: 'border',
+	items: [
+		{
+			region: 'north',
+			height: 45,
+			html: '<H4><%=@roll_pool.name%></H4>'+
+			'Description: <%=@roll_pool.description%><br/>'
+		},
+		{
+			region: 'center',
+			xtype: 'tabpanel',
+					activeTab: 0,
+					items: [{
+						title: 'Dungeons',
+						xtype: 'grid',
+						stripeRows: true,
+						ds: new Ext.data.Store({
+									autoLoad: true,
+							    proxy: new Ext.data.HttpProxy({
+							               url: '/roll_pools/dungeons/<%= @roll_pool.id %>?format=ext_json',
+							               method: 'GET'
+							           }),
+							    reader: new Ext.data.JsonReader({
+							                root: 'dungeons',
+							                id: 'id',
+							                totalProperty: 'results'
+							            },
+							            [ {name: 'id', mapping: 'dungeon.id'},
+														 {name: 'dungeon[name]', mapping: 'dungeon.name'},
+														 {name: 'dungeon[mode]', mapping: 'dungeon.mode'},
+														 {name: 'dungeon[player_limit]', mapping: 'dungeon.player_limit'},
+														 {name: 'dungeon[chunk_size_in_min]', mapping: 'dungeon.chunk_size_in_min'},
+														 {name: 'dungeon[created_at]', mapping: 'dungeon.created_at'},
+														 {name: 'dungeon[updated_at]', mapping: 'dungeon.updated_at'}
+													]),
+							    sortInfo: {field: 'id', direction: 'ASC'}
+							}), // End of Datasource
+							cm: new Ext.grid.ColumnModel([
+						    {id: 'id', header: "#", width: 25, dataIndex: 'id'},
+						    {header: 'Name', width: 150,dataIndex: 'dungeon[name]'},
+						    {header: 'Mode', dataIndex: 'dungeon[mode]'},
+						    {header: 'Player limit', dataIndex: 'dungeon[player_limit]'},
+						    {header: 'Chunk size in min', dataIndex: 'dungeon[chunk_size_in_min]'}
+						  ]), // End of Column Model
+							listeners: {
+								 dblclick: function(grid, row, e) {
+								 	var selected = this.getSelectionModel().getSelected();
+								 	window.location.href = '/dungeons/' + selected.data.id;
+								 }
+							}
+						}
+						] // End of Tab panel items
+				}] // End of Center Panel Items
+
+});

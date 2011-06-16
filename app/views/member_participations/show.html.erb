@@ -1,0 +1,6 @@
+<div id="member_participation-form"></div>
+<%= render :partial => 'form_items', :object => :member_participation_form_items %>
+<%= ext_form_for 'MemberParticipation',
+                 :element => 'member_participation-form',
+                 :form_items => :member_participation_form_items,
+                 :mode => :show %>

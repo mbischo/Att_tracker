@@ -1,0 +1,51 @@
+<div id="form-spot"></div>
+<% javascript_tag do -%>
+function runSubmit() {
+		Ext.getCmp('loginForm').getForm().submit({
+				url: '/session', 
+				params: {_method: 'POST'},
+				waitMessage: 'Logging in ...',
+				success: function(form, action) {
+				 window.location = "/";
+				},
+				failure: function(form, action) {
+					Ext.Msg.alert('Login Failed!', 'Login Failed');
+				}
+			}
+		);
+	}
+	
+	Ext.onReady(function(){
+	
+		Ext.QuickTips.init();
+		var formPanel = new Ext.FormPanel({
+			id: 'loginForm',
+			labelWidth:   75, // label settings here cascade unless overridden
+	    frame:         true,
+			waitMsgTarget: true,
+	    title:         'Tracker Login',
+	    bodyStyle:     'padding:5px 5px 0',
+	    width:      350,
+	    defaults:      {width: 230},
+	    defaultType:   'textfield',
+			renderTo: 'form-spot',
+			items: [
+				<% if protect_against_forgery? %>{name: 'authenticity_token', xtype: 'hidden', value: '<%=form_authenticity_token%>'},<% end %>
+				{fieldLabel: 'Login', name:'login', id: 'nameField'},
+				{fieldLabel: 'Password', name: 'password', inputType: 'password'}
+			],
+			buttons: [
+				{  text: 'Login',
+			  	type: 'submit',
+					handler: runSubmit
+				}
+			],
+			keys: [{
+				key: Ext.EventObject.ENTER,
+				fn: runSubmit
+			}]
+		});
+		Ext.getCmp('nameField').focus(true);
+	
+	});
+<% end %>

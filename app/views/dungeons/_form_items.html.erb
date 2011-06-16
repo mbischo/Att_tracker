@@ -1,0 +1,40 @@
+	// turn on validation errors beside the field globally
+	Ext.form.Field.prototype.msgTarget = 'side';
+	
+	var centerPanel = new Ext.FormPanel({
+	    labelWidth:   75, // label settings here cascade unless overridden
+	    url:          '/dungeons',
+	    frame:         true,
+	    waitMsgTarget: true,
+	    title:         'Showing Dungeon',
+	    bodyStyle:     'padding:5px 5px 0',
+	    width:      350,
+	    defaults:      {width: 230},
+	    defaultType:   'textfield',
+	    baseParams:    {<% if protect_against_forgery? %> <%=request_forgery_protection_token%>: '<%=form_authenticity_token%>'<% end %>},
+	    items: [
+						    {  fieldLabel: 'Name',  xtype: 'textfield',  name: 'dungeon[name]',disabled: <%= @mode==:show%>,value:'<%=@dungeon.name %>'},
+						    {  fieldLabel: 'Mode',  xtype: 'textfield',  name: 'dungeon[mode]',disabled: <%= @mode==:show%>,value:'<%=@dungeon.mode %>'},
+						    {  fieldLabel: 'Player limit',  xtype: 'textfield',  name: 'dungeon[player_limit]',disabled: <%= @mode==:show%>,value:'<%=@dungeon.player_limit %>'},
+						    {  fieldLabel: 'Chunk size in min',  xtype: 'textfield',  name: 'dungeon[chunk_size_in_min]',disabled: <%= @mode==:show%>,value:'<%=@dungeon.chunk_size_in_min %>'}
+						  ],
+	
+	    buttons: [ <% if @mode == :edit%>
+										{  text: 'Save',
+									  	type: 'submit',
+											handler: function(){ 
+												centerPanel.getForm().submit({url:'/dungeons/<%= @dungeon.id %>?format=ext_json', params: { _method: 'PUT' }, waitMsg:'Saving...'});
+											}
+										},
+									<% elsif @mode == :new %>
+									{  text: 'Save',
+									  	type: 'submit',
+											handler: function(){ 
+												centerPanel.getForm().submit({url:'/dungeons/<%= @dungeon.id %>?format=ext_json', params: { _method: 'POST' }, waitMsg:'Saving...'});
+											}
+										},
+									<% end %>
+                 {  text: 'Back',  handler: function(){ centerPanel.suspendEvents(); window.location.href = '/dungeons'; }}
+               ]
+	});
+	

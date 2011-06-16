@@ -1,0 +1,27 @@
+<div id="toon_class-grid"></div>
+<% javascript_tag do -%>
+var toon_class_datastore = new Ext.data.Store({
+    proxy: new Ext.data.HttpProxy({
+               url: '/toon_classes?format=ext_json',
+               method: 'GET'
+           }),
+    reader: new Ext.data.JsonReader({
+                root: 'toon_classes',
+                id: 'id',
+                totalProperty: 'results'
+            },
+            [ {name: 'id', mapping: 'toon_class.id'},
+						 {name: 'toon_class[name]', mapping: 'toon_class.name'},
+							{name: 'toon_class[icon]', mapping: 'toon_class.icon'} ]),
+    // turn on remote sorting
+    remoteSort: true,
+    sortInfo: {field: 'id', direction: 'ASC'}
+});
+
+  var toon_class_column_model = new Ext.grid.ColumnModel([
+    {id: 'id', header: "#", width: 20, dataIndex: 'id'},
+    {header: 'Name', dataIndex: 'toon_class[name]'},
+    {header: 'Icon', dataIndex: 'toon_class[icon]'}
+  ]);
+<% end -%>
+<%= ext_grid_for 'ToonClass', :element => 'toon_class-grid' %>

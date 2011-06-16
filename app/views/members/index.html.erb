@@ -1,0 +1,114 @@
+ var member_datastore = new Ext.data.Store({
+      proxy: new Ext.data.HttpProxy({
+                 url: '/members?format=ext_json',
+                 method: 'GET'
+             }),
+      reader: new Ext.data.JsonReader({
+                  root: 'members',
+                  id: 'id',
+                  totalProperty: 'results'
+              },
+              [ {name: 'id', mapping: 'member.id'},
+							 {name: 'name', mapping: 'member.name'},
+							 // {name: 'main_toon', mapping: 'member.main_toon.name'},
+							 {name: 'epic_need_total', mapping: 'member.epic_need_total'},
+							 {name: 'epic_greed_total', mapping: 'member.epic_greed_total'},
+							 {name: 'created_at', mapping: 'member.created_at', type: 'date', dateFormat: 'c'},
+							 {name: 'updated_at', mapping: 'member.updated_at', type: 'date', dateFormat: 'c'}]),
+      // turn on remote sorting
+      remoteSort: true,
+      sortInfo: {field: 'name', direction: 'ASC'}
+  });
+
+  var member_column_model = new Ext.grid.ColumnModel([
+    {id: 'id', header: "#", width: 20, dataIndex: 'id', hidden: true},
+    {header: 'Name', dataIndex: 'name'},
+		//{header: 'Main toon', dataIndex: 'main_toon'},
+    {header: 'Epic need total', dataIndex: 'epic_need_total'},
+    {header: 'Epic greed total', dataIndex: 'epic_greed_total'}
+  ]);
+	
+
+  Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+
+  member_column_model.defaultSortable = true;
+
+  // create the grid
+  var centerPanel = new Ext.grid.GridPanel({
+      ds: member_datastore,
+      cm: member_column_model,
+      sm: new Ext.grid.RowSelectionModel({singleSelect:true}),
+      title:      'Listing Members',
+      stripeRows: true,
+      viewConfig: {
+          forceFit:true
+      },
+
+      // inline toolbars
+      tbar:[{
+          text:'New...',
+					disabled: <%= current_user == nil %>,
+          tooltip:'Create new Member',
+          handler: function(){
+                     centerPanel.suspendEvents();
+                     window.location.href = '/members/new';
+                   },
+          iconCls:'add'
+      }, '-', {
+          text:'Edit...',
+					disabled: <%= current_user == nil %>,
+          tooltip:'Edit selected Member',
+          handler: function(){
+                     var selected = centerPanel.getSelectionModel().getSelected();
+                     if(selected) {
+                       centerPanel.suspendEvents();
+                       window.location.href = '/members/' + selected.data.id + '/edit';
+                     } else { 
+                       alert('Please select a row first.');
+                     }
+                   },
+          iconCls:'edit'
+      },'-',{
+          text:'Delete...',
+					disabled: <%= current_user == nil %>,
+          tooltip:'Delete selected Member',
+          handler: function(){
+                     var selected = centerPanel.getSelectionModel().getSelected();
+                     if(selected) {
+                       if(confirm('Really delete?')) {
+                          var conn = new Ext.data.Connection();
+                          conn.request({
+                              url: '/members/' + selected.data.id,
+                              method: 'POST',
+                              params: { _method: 'DELETE'
+                                        <% if protect_against_forgery? %> , <%=request_forgery_protection_token%>: '<%=form_authenticity_token%>'<% end %>
+                                      },
+                              success: function(response, options){ member_datastore.reload(); },
+                              failure: function(response, options){ alert('Delete operation failed.'); }
+                          });
+                       }
+                     } else { 
+                       alert('Please select a row first.');
+                     }
+                   },
+          iconCls:'remove'
+      },'->'],
+      bbar: new Ext.PagingToolbar({
+                pageSize: 20,
+                store: member_datastore,
+                displayInfo: true,
+                displayMsg: 'Record {0} - {1} of {2}',
+                emptyMsg: "No records found"
+      }),
+      plugins:[new Ext.ux.grid.Search({
+                  position:'top'
+              })]
+  });
+
+  // show record on double-click
+  centerPanel.on("rowdblclick", function(grid, row, e) {
+    centerPanel.suspendEvents();
+    window.location.href = '/members/' + centerPanel.getStore().getAt(row).data.id;
+  });
+
+  member_datastore.load({params: {start: 0, limit:20}});

@@ -1,0 +1,254 @@
+<% @mode = :show %>
+
+var toonStore = new Ext.data.Store({
+							autoLoad: false,
+				      proxy: new Ext.data.HttpProxy({
+				                 url: '/toons?format=ext_json',
+				                 method: 'GET'
+				             }),
+				      reader: new Ext.data.JsonReader({
+				                  root: 'toons',
+				                  id: 'id',
+				                  totalProperty: 'results'
+				              },
+				              [ {name: 'id', mapping: 'toon.id'},
+											 {name: 'name', mapping: 'toon.name'},
+											 {name: 'created_at', mapping: 'toon.created_at'},
+											 {name: 'updated_at', mapping: 'toon.updated_at'} ]),
+				      // turn on remote sorting
+				      remoteSort: false,
+				      sortInfo: {field: 'name', direction: 'ASC'}
+				  });
+var memDs = new Ext.data.Store({
+									autoLoad: true,
+									id : 'memberPartList',
+							    proxy: new Ext.data.HttpProxy({
+							               url: '/raid_events/mem_participations/<%= @raid_event.id %>?format=ext_json',
+							               method: 'GET'
+							           }),
+							    reader: new Ext.data.JsonReader({
+							                root: 'member_participations',
+							                id: 'id',
+							                totalProperty: 'results'
+							            },
+							            [ {name: 'id', mapping: 'member_participation.id'},
+													 {name: 'name', mapping: 'member_participation.toon.name'},
+													 {name: 'guild', mapping: 'member_participation.toon.guild'},
+													 {name: 'class_name', mapping: 'member_participation.toon.toonClass.name'},
+													 {name: 'chunk_time', mapping: 'member_participation.time_chunks_played'},
+													 {name: 'is_manual', mapping: 'member_participation.is_manual'},
+													 {name: 'toon_id', mapping: 'member_participation.toon_id'}]),
+							    sortInfo: {field: 'name', direction: 'ASC'}
+							});
+												
+var addToonPrompt = new Ext.Window({
+	layout : 'fit',
+	title : 'Add Toon to Raid',
+  width       : 350,
+  height      : 145,
+  closeAction :'hide',
+	hidden : true,
+	items: [
+		{ xtype: 'form',
+			baseParams:    {<% if protect_against_forgery? %> <%=request_forgery_protection_token%>: '<%=form_authenticity_token%>'<% end %>},
+			id: 'addToonForm',
+			items : [
+				{ 
+					fieldLabel: 'Toon',
+					id: 'toonCombo',
+					xtype: 'combo',
+					lazyInit : false,
+					store: toonStore,
+					hiddenName: 'member_participation[toon_id]',
+					valueField: 'id',
+					displayField: 'name',
+					mode: 'remote',
+					typeAhead: false,
+					triggerAction: 'all',
+					editable: false,
+					allowBlank: false,
+				},
+				{ xtype : 'textfield', name : 'member_participation[time_chunks_played]', fieldLabel : 'Time', maxLength : 3, width : 25,
+				  invalidText: 'Time must be between 1 and <%= @raid_event.time_chunks %>',
+					validator: function(value) { if ( (value > 0) && (value <= <%= @raid_event.time_chunks %>) ) { return true; } else { return false; } } 
+				 },
+				{ xtype : 'hidden', name : 'member_participation[raid_event_id]', value : '<%= @raid_event.id %>' },
+				{ xtype : 'hidden', name : 'member_participation[is_manual]', value : 'true' }
+			]
+		}
+	],
+	buttons: [{  text: 'Save',
+					  	type: 'submit',
+							handler: function(){ 
+								Ext.getCmp('addToonForm').getForm().submit({
+									url:'/member_participations?format=ext_json',
+									params: { _method: 'POST' },
+									timeout: 20000,
+									waitMsg:'Saving ...',
+									scope: 'addToonForm',
+									success: function(msg) {
+										memDs.reload();
+										addToonPrompt.hide();
+									}
+								});
+							}
+						},{
+        text     : 'Close',
+        handler  : function(){
+            addToonPrompt.hide();
+        }
+    }]
+});
+
+							
+var centerPanel = new Ext.Panel({
+	layout: 'border',
+	items: [
+		{
+			region: 'north',
+			height: 135,
+			html: '<H4><%=@raid_event.name%> <%= if @raid_event.is_scheduled then '&nbsp;(Scheduled)' end %> <%= if @raid_event.is_nonrun then '-(Called Off)' end %></H4>'+
+			'<%=@raid_event.dungeon.name%>&nbsp;(<%=@raid_event.dungeon.mode%>)<br/>' +
+			'Description: <%=@raid_event.description%><br/>' +
+			'Reporter: <%=@raid_event.reporter%><br/>Time Chunks:<%= @raid_event.time_chunks %><br/>' +
+			'Begin: <%= @raid_event.begin_date.strftime('%a %b %d %I:%M %p (server time %Z)') %><br/>'+
+			'End: <%= @raid_event.end_date.strftime('%a %b %d %I:%M %p (server time %Z)') if !@raid_event.is_nonrun %>'
+		},
+		{
+			region: 'center',
+			xtype: 'tabpanel',
+					activeTab: <%= if @raid_event.is_nonrun then 1 else 0 end%>,
+					items: [{
+						title: 'Boss Kills',
+						xtype: 'grid',
+						ds: new Ext.data.Store({
+							    proxy: new Ext.data.HttpProxy({
+							               url: '/raid_events/boss_kills/<%= @raid_event.id %>?format=ext_json',
+							               method: 'GET'
+							           }),
+							    reader: new Ext.data.JsonReader({
+							                root: 'boss_kills',
+							                id: 'id',
+							                totalProperty: 'results'
+							            },
+							            [ {name: 'id', mapping: 'boss_kill.id'},
+													 {name: 'name', mapping: 'boss_kill.boss_name'},
+													 {name: 'kill_time', mapping: 'boss_kill.kill_date', type: 'date', dateFormat: 'c'}]),
+							    sortInfo: {field: 'kill_time', direction: 'ASC'}
+							}), // End of Datasource
+						cm: new Ext.grid.ColumnModel([
+					    {id: 'id', header: "#", dataIndex: 'id',hidden:true},
+							{header: 'Kill Time', dataIndex: 'kill_time', width: 70, renderer : Ext.util.Format.dateRenderer('h:i A'), sortable: true},
+					    {header: 'Name', dataIndex: 'name', sortable: true, width: 250}
+					  ]), // End of Column Model
+			      stripeRows: true,
+						listeners: {
+							render: function(cmp) { cmp.store.load(); }
+						}
+						},
+						{
+						title: 'Toons',
+						xtype: 'grid',
+						id: 'toonGrid',
+						tbar:[{
+				      text:'Add Toon',
+				      tooltip:'Add Toon to Raid',
+							disabled: <%= current_user == nil %>,
+				      handler: function(){
+												 Ext.getCmp('addToonForm').getForm().reset();
+				                 addToonPrompt.show();
+				               },
+				      iconCls:'add'
+				  	},
+						{
+				      text:'Remove Toon',
+				      tooltip:'Remove Toon from Raid',
+							disabled: <%= current_user == nil %>,
+							id: 'removeToonButton',
+							hidden: true,
+				      handler: function(){
+													var toonSelected = Ext.getCmp('toonGrid').getSelectionModel().getSelected();
+				                 if ( toonSelected && confirm("Really Remove " + toonSelected.data.name + " ?") ) {
+												    var conn = new Ext.data.Connection();
+	                          conn.request({
+	                              url: '/member_participations/' + toonSelected.data.id,
+	                              method: 'POST',
+	                              params: { _method: 'DELETE'
+	                                        <% if protect_against_forgery? %> , <%=request_forgery_protection_token%>: '<%=form_authenticity_token%>'<% end %>
+	                                      },
+	                              success: function(response, options){ memDs.reload(); },
+	                              failure: function(response, options){ alert('Delete operation failed.'); }
+	                          });
+												 } else { 
+		                       alert('Please select a row first.');
+		                     }
+				               },
+				      iconCls:'remove'
+				  	}
+						],
+						viewConfig: {
+							getRowClass: function (record,indec,param,store) {
+								if ( record.data.is_manual ) {
+									return 'manual-participation';
+								} 
+							}
+						},
+						stripeRows: true,
+						ds: memDs, // End of Datasource
+							cm: new Ext.grid.ColumnModel([
+						    {id: 'id', header: "#", dataIndex: 'id',hidden:true},
+								{header: '', dataIndex: 'class_name', width: 85, sortable: true},
+						    {header: 'Name', dataIndex: 'name', sortable: true},
+						    {header: 'Time Played', width: 35, dataIndex: 'chunk_time', sortable: true},
+								{header: 'Guild', dataIndex: 'guild', sortable: true, width: 175}
+						  ]), // End of Column Model
+							listeners: {
+								 dblclick: function(grid, row, e) {
+								 	var selected = this.getSelectionModel().getSelected();
+								 	window.location.href = '/toons/' + selected.data.toon_id;
+								 },
+								 click: function(grid, row, e) {
+								  var selected = this.getSelectionModel().getSelected();
+								 	if ( selected.data.is_manual ) {
+										Ext.getCmp('removeToonButton').show();
+									} else {
+										Ext.getCmp('removeToonButton').hide();
+									}
+								 }
+							}
+						},
+						{
+						title: 'Loot',
+						xtype: 'grid',
+						ds: new Ext.data.Store({
+									autoLoad: true,
+							    proxy: new Ext.data.HttpProxy({
+							               url: '/raid_events/loot_events/<%= @raid_event.id %>?format=ext_json',
+							               method: 'GET'
+							           }),
+							    reader: new Ext.data.JsonReader({
+							                root: 'loot_events',
+							                id: 'id',
+							                totalProperty: 'results'
+							            },
+							            [ {name: 'id', mapping: 'loot_event.id'},
+													 {name: 'name', mapping: 'loot_event.item_name'},
+													 {name: 'loot_date', mapping: 'loot_event.loot_date', type: 'date', dateFormat: 'c'},
+													 {name: 'toon_name', mapping: 'loot_event.toon.name'}]),
+							    sortInfo: {field: 'loot_date', direction: 'ASC'}
+							}), // End of Datasource
+							cm: new Ext.grid.ColumnModel([
+						    {id: 'id', header: "#", dataIndex: 'id',hidden:true},
+								{header: 'Loot Time', dataIndex: 'loot_date', width: 70, renderer : Ext.util.Format.dateRenderer('h:i A')},
+						    {header: 'Item Name', dataIndex: 'name', width: 250},
+						    {header: 'Toon Name', dataIndex: 'toon_name'}
+						  ]), // End of Column Model
+				      stripeRows: true,
+				      viewConfig: {
+				          //forceFit:true
+				      }
+						} // End of loot grid
+						] // End of Tab panel items
+				}] // End of Center Panel Items
+
+});

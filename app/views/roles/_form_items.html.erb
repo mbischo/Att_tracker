@@ -1,0 +1,6 @@
+<% javascript_tag do -%>
+  var <%= "#{form_items}" %> = [
+    <%= ext_field(:field_label => 'Title', :name => 'role[title]', :xtype => :text_field) %>,
+    <%= ext_field(:field_label => 'Description', :name => 'role[description]', :xtype => :text_field) %>
+  ];
+<% end -%>

@@ -1,0 +1,116 @@
+	// turn on validation errors beside the field globally
+	Ext.form.Field.prototype.msgTarget = 'side';
+	
+	function nameDisplayer(v,rec) {
+		return rec.dungeon.name + " - " + rec.dungeon.mode;
+	}
+	
+	var dungeon_datastore = new Ext.data.Store({
+			autoLoad: true,
+      proxy: new Ext.data.HttpProxy({
+								<% if @mode == :new %>
+                 url: '/dungeons?format=ext_json',
+								<% else %>
+									url: '/roll_pools/dungeon_choices/<%= @roll_pool.id %>?format=ext_json',
+								<% end %>
+                 method: 'GET'
+             }),
+      reader: new Ext.data.JsonReader({
+                  root: 'dungeons',
+                  id: 'id',
+                  totalProperty: 'results'
+              },
+              [ {name: 'id', mapping: 'dungeon.id'},
+							 {name: 'name', mapping: 'dungeon.name'},
+							 {name: 'displayName', convert: nameDisplayer},
+							 {name: 'mode', mapping: 'dungeon.mode'},
+							 {name: 'player_limit', mapping: 'dungeon.player_limit'},
+							 {name: 'chunk_size_in_min', mapping: 'dungeon.chunk_size_in_min'},
+							 {name: 'created_at', mapping: 'dungeon.created_at'},
+							 {name: 'updated_at', mapping: 'dungeon.updated_at'} ]),
+      // turn on remote sorting
+      remoteSort: false,
+      sortInfo: {field: 'id', direction: 'ASC'}
+  });
+	
+	var selected_dungeon_datastore = new Ext.data.Store({
+			autoLoad: true,
+	    proxy: new Ext.data.HttpProxy({
+	               url: '/roll_pools/dungeons/<%= @roll_pool.id %>?format=ext_json',
+	               method: 'GET'
+	           }),
+	    reader: new Ext.data.JsonReader({
+	                root: 'dungeons',
+	                id: 'id',
+	                totalProperty: 'results'
+	            },
+	            [ {name: 'id', mapping: 'dungeon.id'},
+								 {name: 'name', mapping: 'dungeon.name'},
+								 {name: 'displayName', convert: nameDisplayer},
+								 {name: 'mode', mapping: 'dungeon.mode'},
+								 {name: 'player_limit', mapping: 'dungeon.player_limit'},
+								 {name: 'chunk_size_in_min', mapping: 'dungeon.chunk_size_in_min'},
+								 {name: 'created_at', mapping: 'dungeon.created_at'},
+								 {name: 'updated_at', mapping: 'dungeon.updated_at'}
+							]),
+	    sortInfo: {field: 'id', direction: 'ASC'}
+	});
+	
+	var centerPanel = new Ext.FormPanel({
+	    labelWidth:   75, // label settings here cascade unless overridden
+	    url:          '/roll_pools',
+	    frame:         true,
+	    waitMsgTarget: true,
+	    title:         'Showing Roll Pool',
+	    bodyStyle:     'padding:5px 5px 0',
+	    width:      750,
+	    defaults:      {width: 230},
+	    defaultType:   'textfield',
+	    baseParams:    {<% if protect_against_forgery? %> <%=request_forgery_protection_token%>: '<%=form_authenticity_token%>'<% end %>},
+	    items: [
+						    {  fieldLabel: 'Name',  xtype: 'textfield',  name: 'roll_pool[name]',disabled: <%= @mode==:show%>,value:'<%=@roll_pool.name %>'},
+						    {  fieldLabel: 'Description',  xtype: 'textfield',  name: 'roll_pool[description]',disabled: <%= @mode==:show%>,value:'<%=@roll_pool.description %>'},
+								{
+				            xtype:"itemselector",
+				            name:"dungeons",
+				            fieldLabel:"Dungeons",
+				            dataFields:["id", "name","mode"],
+				            toStore: selected_dungeon_datastore,
+										width: 500,
+				            msWidth:250,
+				            msHeight:200,
+				            valueField:"id",
+				            displayField:"displayName",
+				            imagePath:"/ext/examples/multiselect/images/",
+				            toLegend:"Selected",
+				            fromLegend:"Available",
+				            fromStore: dungeon_datastore,
+				            toTBar:[{
+				                text:"Clear",
+				                handler:function(){
+				                    var i=centerPanel.getForm().findField("dungeons");
+				                    i.reset.call(i);
+				                }
+				            }]
+				        }
+						  ],
+	
+	    buttons: [ <% if @mode == :edit%>
+										{  text: 'Save',
+									  	type: 'submit',
+											handler: function(){ 
+												centerPanel.getForm().submit({url:'/roll_pools/<%= @roll_pool.id %>?format=ext_json', params: { _method: 'PUT' }, waitMsg:'Saving...'});
+											}
+										},
+									<% elsif @mode == :new %>
+									{  text: 'Save',
+									  	type: 'submit',
+											handler: function(){ 
+												centerPanel.getForm().submit({url:'/roll_pools/<%= @roll_pool.id %>?format=ext_json', params: { _method: 'POST' }, waitMsg:'Saving...'});
+											}
+										},
+									<% end %>
+                 {  text: 'Back',  handler: function(){ centerPanel.suspendEvents(); window.location.href = '/roll_pools'; }}
+               ]
+	});
+	
